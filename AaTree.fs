@@ -1,41 +1,68 @@
 ﻿namespace ListZipperVsRbTree
 
+open System.Collections.Generic
+
 (* Implementation guided by following paper: https://arxiv.org/pdf/1412.4882.pdf *)
 
-module AATree =
-    type AaTree<'T> = 
-        | E
-        | T of int * AaTree<'T> * 'T * AaTree<'T>
+/// A balanced binary tree similar to a red-black tree which may have less predictable performance.
+type AaTree<'T when 'T: comparison> = 
+    | E
+    | T of int * AaTree<'T> * 'T * AaTree<'T>
 
-    let sngl = function
+    member x.ToList() =
+        let rec traverse node acc =
+            match node with
+            | E -> []
+            | T(_, l, v, r) ->
+                traverse l acc @ [v] |> traverse r      
+        traverse x []
+
+    interface IEnumerable<'T> with
+        member x.GetEnumerator() =
+            (x.ToList() :> _ seq).GetEnumerator()
+
+    interface System.Collections.IEnumerable with
+        member x.GetEnumerator() =
+            (x :> _ seq).GetEnumerator()
+
+
+module AaTree =
+    /// O(1): Returns a boolean if tree is empty.
+    let isEmpty = function
+        | E -> true
+        | _ -> false
+
+    let private sngl = function
         | E -> false
         | T(_, _, _, E) -> true
         | T(lvx, _, _, T(lvy, _, _, _)) -> lvx > lvy
 
+    /// O(1): Returns an empty AaTree.
     let empty = E
 
-    let lvl = function
+    let private lvl = function
         | E -> 0
         | T(lvt, _, _, _) -> lvt
 
-    let nlvl = function
+    let private nlvl = function
         | T(lvt, _, _, _) as t -> 
             if sngl t
             then (lvt - 1)
             else lvt
         | _ -> failwith "unexpected nlvl case"
 
-    let skew = function
+    let private skew = function
         | T(lvx, T(lvy, a, ky, b), kx, c) when lvx = lvy
             -> T(lvx, a, ky, T(lvx, b, kx, c))
         | t -> t
 
-    let split = function
+    let private split = function
         | T(lvx, a, kx, T(lvy, b, ky, T(lvz, c, kz, d))) 
             when lvx = lvy && lvy = lvz
               -> T(lvx + 1, T(lvx, a, kx, b), ky, T(lvx, c, kz, d))
         | t -> t
 
+    /// O(log n): Returns a new AaTree with the parameter inserted.
     let rec insert item = function
         | E -> T(1, E, item, E)
         | T(h, l, v, r) as node ->
@@ -45,7 +72,7 @@ module AATree =
             then split <| (skew <| T(h, l, v, insert item r))
             else node
 
-    let adjust = function
+    let private adjust = function
         | T(lvt, lt, kt, rt) as t when lvl lt >= lvt - 1 && lvl rt >= (lvt - 1) 
             -> t
         | T(lvt, lt, kt, rt) when lvl rt < lvt - 1 && sngl lt-> 
@@ -59,13 +86,14 @@ module AATree =
             T(lva + 1, T(lvt - 1, lt, kt, c), ka, (split (T(nlvl a, d, kr, b))))
         | _ -> failwith "unexpected adjust case"
 
-    let rec dellrg = function
+    let rec private dellrg = function
         | T(_, l, v, E) -> (l, v)
         | T(h, l, v, r) ->
             let (newLeft, newVal) = dellrg l
             T(h, newLeft, v, r), newVal
         | _ -> failwith "unexpected dellrg case"
 
+    /// O(log n): Returns an AaTree with the parameter removed.
     let rec delete item = function
         | E -> E
         | T(_, E, v, rt) when item = v -> rt
@@ -78,3 +106,29 @@ module AATree =
             else 
                 let (newLeft, newVal) = dellrg l
                 T(h, newLeft, newVal, r)
+
+    /// O(n): Returns a list containing the elements in the tree.
+    let toList (tree: AaTree<'T>) =
+        tree.ToList()
+
+    let toSeq (tree: AaTree<'T>) =
+        tree |> toList |> List.toSeq
+
+    let toArray (tree: AaTree<'T>) =
+        tree |> toList |> List.toArray
+
+    /// O(n): Builds an AaTree from the elements in the given list.
+    let ofList collection =
+        List.fold (fun acc item -> insert item acc) empty collection
+
+    let ofSeq collection =
+        Seq.fold (fun acc item -> insert item acc) empty collection
+
+    let ofArray collection =
+        Array.fold (fun acc item -> insert item acc) empty collection
+
+    type AaTree<'T when 'T: comparison> with
+        member x.Insert(y) = insert y x
+        member x.Delete(y) = delete y x
+        member x.ToSeq() = toSeq x
+        member x.ToArray() = toArray x
