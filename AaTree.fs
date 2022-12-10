@@ -107,6 +107,32 @@ module AaTree =
                 let (newLeft, newVal) = dellrg l
                 T(h, newLeft, newVal, r)
 
+    /// O(log n): Returns true if the given item exists in the tree.
+    let rec exists item = function
+        | E -> false
+        | T(_, l, v, r) ->
+            if v = item then true
+            elif item < v then exists item l
+            else exists item r
+
+    /// O(log n): Returns true if the given item does not exist in the tree.
+    let rec notExists item tree =
+        not <| exists item tree
+
+    /// O(log n): Returns Some item if it was found in the tree; else, returns None.
+    let rec tryFind item = function
+        | E -> None
+        | T(_, l, v, r) ->
+            if v = item then Some v
+            elif item < v then tryFind item l
+            else tryFind item r
+
+    /// O(log n): Returns an item if it was found in the tree; else, throws error.
+    let rec find item tree =
+        match tryFind item tree with
+        | None -> failwith <| sprintf "Item %A was not found in the tree." item
+        | Some x -> x
+
     /// O(n): Returns a list containing the elements in the tree.
     let toList (tree: AaTree<'T>) =
         tree.ToList()
