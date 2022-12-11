@@ -76,26 +76,26 @@ module AaTreeTest =
             Expect.equal outputArray inputArray ""
         }
 
-        test "test toSeq" {
+        test "test toSeq" { 
             let inputSeq = Seq.ofList ["hi";"why";"try"]
             let tree = AaTree.ofSeq inputSeq
             let outputSeq = AaTree.toSeq tree
             Expect.containsAll outputSeq inputSeq ""
         }
 
-        (* Fold and foldback tests. *)
-        (* We will try subtracting a list containing the length of each string element, 
+        (* Fold and foldback tests. 
+         * We will try building two lists using fold/foldback, 
          * because that is an operation where order matters. *)
-        test "test fold" {
-            let tree = AaTree.ofList ["1";"22";"333"]
-            let foldResult = AaTree.fold (fun a (e: string) -> e.Length::a) [] tree
-            Expect.equal foldResult [1;2;3] ""
+         test "test fold" {
+            let tree = AaTree.ofList [1;2;3]
+            let foldBackResult = AaTree.fold (fun a e -> e::a) [] tree
+            Expect.equal foldBackResult [3;2;1] ""
         }
 
         test "test foldBack" {
-            let tree = AaTree.ofList ["1";"22";"333"]
-            let foldBackResult = AaTree.foldBack (fun a (e: string) -> e.Length::a) [] tree
-            Expect.equal foldBackResult [3;2;1] ""
+            let tree = AaTree.ofList [1;2;3]
+            let foldResult = AaTree.foldBack (fun a e -> e::a) [] tree
+            Expect.equal foldResult [1;2;3] ""
         }
 
         (* Insert and delete tests. *)

@@ -128,33 +128,31 @@ module AaTree =
         | None -> failwith <| sprintf "Item %A was not found in the tree." item
         | Some x -> x
 
-    let rec private foldAOpt (f: OptimizedClosures.FSharpFunc<_,_,_>) x t =
+    let rec private foldOpt (f: OptimizedClosures.FSharpFunc<_,_,_>) x t =
         match t with
         | E -> x
         | T(_, l, v, r) ->
-            let x = foldAOpt f x r
+            let x = foldOpt f x l
             let x = f.Invoke(x,v)
-            foldAOpt f x l
+            foldOpt f x r
 
-    /// Executes a function on each element in reverse order (for example: 3, 2, 1 or c, b, a).
-    let fold f x t = foldAOpt (OptimizedClosures.FSharpFunc<_,_,_>.Adapt(f)) x t
+    /// Executes a function on each element in order (for example: 1, 2, 3 or a, b, c).
+    let fold f x t = foldOpt (OptimizedClosures.FSharpFunc<_,_,_>.Adapt(f)) x t
 
-    
     let rec private foldBackOpt (f: OptimizedClosures.FSharpFunc<_,_,_>) x t =
         match t with
         | E -> x
         | T(_, l, v, r) ->
-            let x = foldBackOpt f x l
+            let x = foldBackOpt f x r
             let x = f.Invoke(x,v)
-            foldBackOpt f x r
+            foldBackOpt f x l
 
-    /// Executes a function on each element in order (for example: 1, 2, 3 or a, b, c).
+    /// Executes a function on each element in reverse order (for example: 3, 2, 1 or c, b, a).
     let foldBack f x t = foldBackOpt (OptimizedClosures.FSharpFunc<_,_,_>.Adapt(f)) x t
-
 
     /// O(n): Returns a list containing the elements in the tree.
     let toList (tree: AaTree<'T>) =
-        fold (fun a e -> e::a) [] tree
+        foldBack (fun a e -> e::a) [] tree
 
     let toSeq (tree: AaTree<'T>) =
         tree |> toList |> List.toSeq
