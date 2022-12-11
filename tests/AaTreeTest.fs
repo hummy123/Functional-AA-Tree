@@ -8,7 +8,7 @@ module AaTreeTest =
     let testAaTree = 
         testList "AaTree" [
 
-        (* Existence methods. *)
+        (* Existence tests. *)
         test "test isEmpty" {
             Expect.isTrue <| AaTree.isEmpty AaTree.empty <| ""
             Expect.isFalse <| AaTree.isEmpty (AaTree.ofList [9]) <| ""            
@@ -39,7 +39,7 @@ module AaTreeTest =
             // Expect.throws (fun () -> AaTree.find "goodbye" tree |> ignore) ""
         }
 
-        (* Conversion from methods. *)
+        (* Conversion from tests. *)
         test "test ofList" {
             let list = ['a'; 'b'; 'c'; 'd'; 'e']
             let tree = AaTree.ofList list
@@ -61,7 +61,7 @@ module AaTreeTest =
                 Expect.isTrue <| AaTree.exists i tree <| ""
         }
 
-        (* Conversion to methods. *)
+        (* Conversion to tests. *)
         test "test toList" {
             let inputList = [0;1;2;3]
             let tree = AaTree.ofList inputList
@@ -83,7 +83,7 @@ module AaTreeTest =
             Expect.containsAll outputSeq inputSeq ""
         }
 
-        (* Fold and foldback methods. *)
+        (* Fold and foldback tests. *)
         (* We will try subtracting a list containing the length of each string element, 
          * because that is an operation where order matters. *)
         test "test fold" {
@@ -96,5 +96,33 @@ module AaTreeTest =
             let tree = AaTree.ofList ["1";"22";"333"]
             let foldBackResult = AaTree.foldBack (fun a (e: string) -> e.Length::a) [] tree
             Expect.equal foldBackResult [3;2;1] ""
+        }
+
+        (* Insert and delete tests. *)
+        test "test insert" {
+            let numsToInsert = [1;2;3;4;5]
+            // Insert items into tree from list via AaTree.Insert in lambda.
+            let tree = List.fold (fun tree el -> AaTree.insert el tree) AaTree.empty numsToInsert
+            
+            // Test that each item in the list is in the tree.
+            for i in numsToInsert do
+                Expect.isTrue <| AaTree.exists i tree <| ""
+        }
+
+        test "test delete" {
+            // We have to insert items into a tree before we can delete them.
+            let numsToInsert = [1;2;3;4;5]
+            let tree = List.fold (fun tree el -> AaTree.insert el tree) AaTree.empty numsToInsert
+
+            // Define numbers to delete and use List.fold to perform AaTree.delete on all
+            let numsToDelete = [1;2;4;5]
+            let tree = List.fold (fun tree el -> AaTree.delete el tree) tree numsToDelete
+
+            // Test that none of the deleted items exist
+            for i in numsToDelete do
+                Expect.isFalse <| AaTree.exists i tree <| ""
+
+            // Test that the one element we did not delete still exists in the tree.
+            Expect.isTrue <| AaTree.exists 3 tree <| ""
         }
       ]
