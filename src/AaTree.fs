@@ -1,4 +1,4 @@
-﻿namespace AaTree
+﻿namespace rec AaTree
 
 open System.Collections.Generic
 
@@ -9,13 +9,8 @@ type AaTree<'T when 'T: comparison> =
     | E
     | T of int * AaTree<'T> * 'T * AaTree<'T>
     
-    member x.ToList() =
-        let rec traverse node acc =
-            match node with
-            | E -> []
-            | T(_, l, v, r) ->
-                traverse l acc @ [v] |> traverse r      
-        traverse x []
+    member x.ToList() = 
+        AaTree.toList x
 
     interface IEnumerable<'T> with
         member x.GetEnumerator() =
@@ -24,7 +19,6 @@ type AaTree<'T when 'T: comparison> =
     interface System.Collections.IEnumerable with
         member x.GetEnumerator() =
             (x :> _ seq).GetEnumerator()
-
 
 module AaTree =
     /// O(1): Returns a boolean if tree is empty.
@@ -178,3 +172,4 @@ module AaTree =
         member x.Delete(y) = delete y x
         member x.ToSeq() = toSeq x
         member x.ToArray() = toArray x
+
