@@ -35,8 +35,7 @@ module AaTreeTest =
         test "test find" {
             let tree = AaTree.ofList ["hello"; "bye"]
             Expect.equal "hello" <| AaTree.find "hello" tree <| ""
-            // Expecto doesn't catch this expected exception for some reason.
-            // Expect.throws (fun () -> AaTree.find "goodbye" tree |> ignore) ""
+            Expect.throws (fun () -> AaTree.find "goodbye" tree |> ignore) ""
         }
 
         (* Conversion from tests. *)
@@ -86,7 +85,7 @@ module AaTreeTest =
         (* Fold and foldback tests. 
          * We will try building two lists using fold/foldback, 
          * because that is an operation where order matters. *)
-         test "test fold" {
+        test "test fold" {
             let tree = AaTree.ofList [1;2;3]
             let foldBackResult = AaTree.fold (fun a e -> e::a) [] tree
             Expect.equal foldBackResult [3;2;1] ""
