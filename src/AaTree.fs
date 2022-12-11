@@ -20,6 +20,7 @@ type AaTree<'T when 'T: comparison> =
         member x.GetEnumerator() =
             (x :> _ seq).GetEnumerator()
 
+[<RequireQualifiedAccess>]
 module AaTree =
     /// O(1): Returns a boolean if tree is empty.
     let isEmpty = function
