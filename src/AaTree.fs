@@ -1,4 +1,4 @@
-﻿namespace ListZipperVsRbTree
+﻿namespace AaTree
 
 open System.Collections.Generic
 
@@ -8,7 +8,7 @@ open System.Collections.Generic
 type AaTree<'T when 'T: comparison> = 
     | E
     | T of int * AaTree<'T> * 'T * AaTree<'T>
-
+    
     member x.ToList() =
         let rec traverse node acc =
             match node with
@@ -67,7 +67,7 @@ module AaTree =
         | E -> T(1, E, item, E)
         | T(h, l, v, r) as node ->
             if item < v
-            then split <| (skew <| T(h, insert item l, v, r)
+            then split <| (skew <| T(h, insert item l, v, r))
             elif item > v
             then split <| (skew <| T(h, l, v, insert item r))
             else node
@@ -133,9 +133,29 @@ module AaTree =
         | None -> failwith <| sprintf "Item %A was not found in the tree." item
         | Some x -> x
 
+    let rec private foldOpt (f: OptimizedClosures.FSharpFunc<_,_,_>) x t =
+        match t with
+        | E -> x
+        | T(_, l, v, r) ->
+            let x = foldOpt f x l
+            let x = f.Invoke(x,v)
+            foldOpt f x r
+
+    let fold f x t = foldOpt (OptimizedClosures.FSharpFunc<_,_,_>.Adapt(f)) x t
+
+    let rec private foldBackOpt (f: OptimizedClosures.FSharpFunc<_,_,_>) x t =
+        match t with
+        | E -> x
+        | T(_, l, v, r) ->
+            let x = foldBackOpt f x r
+            let x = f.Invoke(x,v)
+            foldBackOpt f x l
+
+    let foldBack f x t = foldBackOpt (OptimizedClosures.FSharpFunc<_,_,_>.Adapt(f)) x t
+
     /// O(n): Returns a list containing the elements in the tree.
     let toList (tree: AaTree<'T>) =
-        tree.ToList()
+        foldBack (fun a e -> e::a) [] tree
 
     let toSeq (tree: AaTree<'T>) =
         tree |> toList |> List.toSeq
